@@ -787,9 +787,9 @@ int main(int argc, char **argv)
 	   RAM free.  If the reason is to be able to write to
 	   un-mmappable block devices, then we could try shared mmap
 	   and revert to anonymous mmap if the shared mmap fails. */
-#ifdef LINUX
+#if __linux__
 	rom_image = mmap(NULL, fslen_ub?fslen_ub:1, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-#else
+#elif __APPLE__
    	rom_image = mmap(NULL, fslen_ub?fslen_ub:1, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
 #endif
 	if (rom_image == MAP_FAILED) {
