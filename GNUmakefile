@@ -8,5 +8,7 @@ all: $(PROGS)
 
 distclean clean:
 	rm -f $(PROGS)
+	rm -rf *.o
+	rm -rf *.dSYM
 
 .PHONY: all clean

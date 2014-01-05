@@ -47,11 +47,17 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
+#ifdef LINUX
 #include <sys/sysmacros.h>
+#endif
 #include <utime.h>
 #include <sys/ioctl.h>
 #define _LINUX_STRING_H_
+#ifdef LINUX
 #include <linux/fs.h>
+#else
+#include <sys/disk.h>
+#endif
 #include <linux/cramfs_fs.h>
 #include <zlib.h>
 
@@ -142,9 +148,15 @@ static void test_super(int *start, size_t *length) {
 		die(FSCK_ERROR, 1, "open failed: %s", filename);
 	}
 	if (S_ISBLK(st.st_mode)) {
+#ifdef LINUX
 		if (ioctl(fd, BLKGETSIZE, length) < 0) {
 			die(FSCK_ERROR, 1, "ioctl failed: unable to determine device size: %s", filename);
 		}
+#else
+		if (ioctl(fd, DKIOCGETBLOCKCOUNT, length) < 0) {
+			die(FSCK_ERROR, 1, "ioctl failed: unable to determine device size: %s", filename);
+		}
+#endif
 		*length = *length * 512;
 	}
 	else if (S_ISREG(st.st_mode)) {
@@ -218,7 +230,11 @@ static void test_crc(int start)
 
 	buf = mmap(NULL, super.size, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
 	if (buf == MAP_FAILED) {
+#ifdef LINUX
 		buf = mmap(NULL, super.size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+#else
+		buf = mmap(NULL, super.size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
+#endif
 		if (buf != MAP_FAILED) {
 			lseek(fd, 0, SEEK_SET);
 			read(fd, buf, super.size);
